@@ -1,3 +1,5 @@
+ZSH_THEME_GIT_PROMPT_DIRTY="%{$fg[blue]%}) %{$fg_bold[yellow]%}✗%{$reset_color%}"
+
 # get the name of the branch we are on
 function git_prompt_info() {
   ref=$(git symbolic-ref HEAD 2> /dev/null) || \
@@ -12,10 +14,27 @@ parse_git_dirty() {
   if [[ $POST_1_7_2_GIT -gt 0 ]]; then
         SUBMODULE_SYNTAX="--ignore-submodules=dirty"
   fi
-  if [[ -n $(git status -s ${SUBMODULE_SYNTAX}  2> /dev/null) ]]; then
-    echo "$ZSH_THEME_GIT_PROMPT_DIRTY"
-  else
-    echo "$ZSH_THEME_GIT_PROMPT_CLEAN"
+  temp=0
+
+  gitstat=$(git status ${SUBMODULE_SYNTAX}  2>/dev/null | grep '\(# Untracked\|# Changes\|# Changed but not updated:\)')
+
+  if [[ $(echo ${gitstat} | grep -c "^# Changes to be committed:$") > 0 ]]; then
+    temp=1
+    echo -n "$ZSH_THEME_GIT_PROMPT_DIRTY"
+  fi
+
+  if [[ $(echo ${gitstat} | grep -c "^\(# Untracked files:\|# Changed but not updated:\|# Changes not staged for commit:\)") > 0 ]]; then
+    if [[ $temp == 0 ]] then
+      ZSH_THEME_GIT_PROMPT_UNTRACKED="%{$fg[blue]%}) %{$fg_bold[red]%}?%{$reset_color%}"
+    else
+      ZSH_THEME_GIT_PROMPT_UNTRACKED="%{$fg_bold[red]%}?%{$reset_color%}"
+    fi
+    echo -n "$ZSH_THEME_GIT_PROMPT_UNTRACKED"
+    temp=0
+  fi
+
+  if [[ $(echo ${gitstat} | grep -v '^$' | wc -l | tr -d ' ') == 0 ]]; then
+    echo -n "$ZSH_THEME_GIT_PROMPT_CLEAN"
   fi
 }
 
