@@ -1,12 +1,9 @@
-ZSH_THEME_GIT_PROMPT_DIRTY="%{$fg[blue]%}) %{$fg_bold[yellow]%}✗%{$reset_color%}"
-
 # get the name of the branch we are on
 function git_prompt_info() {
   ref=$(git symbolic-ref HEAD 2> /dev/null) || \
   ref=$(git rev-parse --short HEAD 2> /dev/null) || return
-  echo "$ZSH_THEME_GIT_PROMPT_PREFIX${ref#refs/heads/}$(parse_git_dirty)$ZSH_THEME_GIT_PROMPT_SUFFIX"
+  echo "$(git_prompt_ahead)$(git_prompt_behind)$ZSH_THEME_GIT_PROMPT_PREFIX${ref#refs/heads/}$(parse_git_dirty)$ZSH_THEME_GIT_PROMPT_SUFFIX"
 }
-
 
 # Checks if working tree is dirty
 parse_git_dirty() {
@@ -58,10 +55,18 @@ git_remote_status() {
     fi
 }
 
-# Checks if there are commits ahead from remote
+# Checks if there are commits ahead from origin
 function git_prompt_ahead() {
   if $(echo "$(git log origin/$(current_branch)..HEAD 2> /dev/null)" | grep '^commit' &> /dev/null); then
-    echo "$ZSH_THEME_GIT_PROMPT_AHEAD"
+    echo -n "$ZSH_THEME_GIT_PROMPT_AHEAD"
+  fi
+}
+
+# Checks if there are commits behind from origin
+function git_prompt_behind() {
+  local cb=$(current_branch)
+  if $(echo "$(git log $cb..origin/$cb 2> /dev/null)" | grep '^commit' &> /dev/null); then
+    echo -n "$ZSH_THEME_GIT_PROMPT_BEHIND"
   fi
 }
 
